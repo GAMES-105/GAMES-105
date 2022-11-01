@@ -88,6 +88,8 @@ part1(viewer, bvh_file_path)
 
 > 为了方便起见，假设BVH文件的Channels无论Translation还是Rotation均按XYZ顺序排列，在用scipy读取时，可以用`R.from_euler('XYZ', [-109.60643629,  -21.85973481, -164.48716608], degrees=True)`类似的格式
 
+> 默认Channel设置是RootJoint节点有6个channel(平移和旋转)，其余子节点有3个，末端节点没有channel。可以参考`data/walk60.bvh`
+
 在实现后，请在`main`函数内取消part1部分的注释，以显示part1的结果，正确读入后, 人会保持T-pose站立(由于腰部在原点，所以会有下半身在地下，可以转动相机看到)。
 
 ### Part 2:前向运动学计算
