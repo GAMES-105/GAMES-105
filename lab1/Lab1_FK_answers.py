@@ -46,6 +46,7 @@ def part2_forward_kinematics(joint_name, joint_parent, joint_offset, motion_data
         joint_orientations: np.ndarray，形状为(M, 4)的numpy数组，包含着所有关节的全局旋转(四元数)
     Tips:
         1. joint_orientations的四元数顺序为(x, y, z, w)
+        2. from_euler时注意使用大写的XYZ
     """
     joint_positions = None
     joint_orientations = None
