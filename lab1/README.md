@@ -17,6 +17,8 @@ pip install panda3d
 
 完成后可以运行`task0_test_environment.py`，你将会看到一个T-pose的人形角色。可以通过鼠标左右中键操作相机视角。
 
+**注意：** `scipy`的`from_euler`里`xyz`大小写代表不同的旋转方式，本次作业里你需要一律使用大写的`XYZ`。
+
 ### 2. 一些角色动画领域的术语和Scipy-Rotation库简介(可跳过)
 
 * Body/Link: 角色的身体的某一部分，是一个空间中实际呈现的物体。比如说，UpperLeg表示角色膝盖往上的大腿部分。
