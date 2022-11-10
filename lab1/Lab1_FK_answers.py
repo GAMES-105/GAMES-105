@@ -61,6 +61,7 @@ def part3_retarget_func(T_pose_bvh_path, A_pose_bvh_path):
         motion_data: np.ndarray，形状为(N,X)的numpy数组，其中N为帧数，X为Channel数。retarget后的运动数据
     Tips:
         两个bvh的joint name顺序可能不一致哦(
+        as_euler时也需要大写的XYZ
     """
     motion_data = None
     return motion_data
