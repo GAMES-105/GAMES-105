@@ -82,7 +82,7 @@ def main():
     # part2_animation(viewer, bvh_file_path)
 
     # part3
-    # part3_retarget(viewer, "data/walk60.bvh", "data/A_pose_run.bvh")
+    part3_retarget(viewer, "data/walk60.bvh", "data/A_pose_run.bvh")
 
 
 if __name__ == "__main__":
