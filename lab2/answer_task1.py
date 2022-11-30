@@ -238,7 +238,7 @@ def blend_two_motions(bvh_motion1, bvh_motion2, alpha):
     blend两个bvh动作
     假设两个动作的帧数分别为n1, n2
     alpha: 0~1之间的浮点数组，形状为(n3,)
-    返回的动作应该有n3帧，第i帧由alpha[i] * bvh_motion1[j] + (1-alpha[i]) * bvh_motion2[k]得到
+    返回的动作应该有n3帧，第i帧由(1-alpha[i]) * bvh_motion1[j] + alpha[i] * bvh_motion2[k]得到
     i均匀地遍历0~n3-1的同时，j和k应该均匀地遍历0~n1-1和0~n2-1
     '''
     
