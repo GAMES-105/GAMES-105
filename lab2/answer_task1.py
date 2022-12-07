@@ -157,8 +157,10 @@ class BVHMotion():
         调整关节顺序为target_joint_name
         '''
         idx = [self.joint_name.index(joint_name) for joint_name in target_joint_name]
+        idx_inv = [target_joint_name.index(joint_name) for joint_name in self.joint_name]
         self.joint_name = [self.joint_name[i] for i in idx]
-        self.joint_parent = [self.joint_parent[i] for i in idx]
+        self.joint_parent = [idx_inv[self.joint_parent[i]] for i in idx]
+        self.joint_parent[0] = -1
         self.joint_channel = [self.joint_channel[i] for i in idx]
         self.joint_position = self.joint_position[:,idx,:]
         self.joint_rotation = self.joint_rotation[:,idx,:]
