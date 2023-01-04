@@ -9,7 +9,7 @@
 conda create -n games105 python=3.8
 conda activate games105
 conda install numpy scipy
-pip install panda3d
+pip install panda3d panda3d-gltf
 ```
 如果下载过慢可使用清华镜像源安装 ( https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/ )
 
