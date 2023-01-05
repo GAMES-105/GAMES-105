@@ -2,15 +2,15 @@ from .viewer import SimpleViewer
 from direct.actor.Actor import Actor
 from panda3d.core import *
 import numpy as np
-import simplepbr
-loadPrcFileData("", "load-file-type fbx p3assimp")
+# import simplepbr
+# loadPrcFileData("", "load-file-type fbx p3assimp")
 
 class MeshViewer(SimpleViewer):
     def __init__(self, *args, **kwargs):
         super(MeshViewer, self).__init__(*args, **kwargs)
     
     def load_character(self):
-        self.model = Actor(r"material/test.gltf")
+        self.model = Actor(r"material/test.bam")
         self.model.children[0].setQuat(Quat(1,0,0,0))
         self.model.reparentTo(self.render)
         self.model.ls()

@@ -9,15 +9,20 @@
 conda create -n games105 python=3.8
 conda activate games105
 conda install numpy scipy
-pip install panda3d panda3d-gltf
+pip install panda3d
 ```
 如果下载过慢可使用清华镜像源安装 ( https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/ )
 
 > 本作业只允许使用 `numpy`， `scipy`，`pytorch`(`tensor-flow`, `jitter`)以及其依赖的库。评测时也以此为准。版本限定到2022年10月31日之前的发布版本。作业文件中请不要import除此之外的库。
 
+并且需要到以下连接中下载`test.bam`放到`material`文件夹中。
+
+```
+https://disk.pku.edu.cn:443/link/9E6A696BAA3A4066C54D7A1A6B0F6E15
+有效期限：2024-03-31 23:59
+```
+
 完成后可以运行`task0_build_and_run.py`，你将会看到一个带有蒙皮的T_pose人物
-
-
 
 <p align=center>
 <img src='images/task0.png' width='60%'> 
