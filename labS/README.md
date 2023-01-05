@@ -52,3 +52,9 @@ https://disk.pku.edu.cn:443/link/9E6A696BAA3A4066C54D7A1A6B0F6E15
 需要提交的文件是`answer_task1.py`。 
 
 如有问题或Bug，可以在issue，QQ群和我们的[课程讨论版](https://github.com/GAMES-105/GAMES-105/discussions)内进行讨论。
+
+
+## Q&A
+
+- 目前已知可能的Bug有panda3d对模型的读入在不同的电脑上可能逻辑不一样，没有定位到产生区别的原因。
+- 在几个助教电脑上测试的结果时`BAM`文件暂无问题。如果下载bam后无法运行可以考虑把`mesh_viewer.py`中对`test.bam`的读取改为`test.gltf`
