@@ -1,7 +1,7 @@
 from Viewer.viewer import SimpleViewer
 from bvh_loader import BVHMotion
 import numpy as np
-from answer_task1_copy import *
+from answer_task1 import *
 from physics_warpper import PhysicsInfo
 class PDController:
     def __init__(self, viewer) -> None:
