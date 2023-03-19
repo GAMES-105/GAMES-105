@@ -1,5 +1,16 @@
 import numpy as np
 
+class TorqueFunc():
+    def __init__(self, torque_func, viewer) -> None:
+        self.torque_func = torque_func
+        self.viewer = viewer
+        
+    def pre_func(self):
+        torque = self.torque_func()
+        # torque = np.zeros((len(self.viewer.joint_name), 3))
+        torque[0] = np.zeros_like(torque[0])
+        self.viewer.set_torque(torque)
+                
 class PhysicsInfo():
     '''
     用于获取viewer当前的物理信息
@@ -76,30 +87,23 @@ class PhysicsHandler():
         }
         
     def set_state(self, state_dict):
-        for i in range(len(state_dict['joint_position'])):
-            self.viewer.set_joints_with_idx(i, state_dict['joint_position'][i], state_dict['joint_orientation'][i])
-        self.viewer.sync_kinematic_to_physics()
+        self.set_physics_joints(state_dict['joint_position'], state_dict['joint_orientation'])
         self.viewer.set_body_velocities(state_dict['velocity'])
         self.viewer.set_body_angular_velocities(state_dict['angular_velocity'])
     
     def get_pose(self):
         return self.viewer.get_pose()
     
-    def set_pose(self, joint_name, joint_translation, joint_orientation):
-        self.viewer.set_pose(joint_name, joint_translation, joint_orientation)
+    def set_pose(self, joint_translation, joint_orientation):
+        self.viewer.set_physics_joints(joint_translation, joint_orientation)
+    
+    
+    def sync_to_kinematics(self):
+        self.viewer.sync_physics_to_kinematics()
+    
+    def simulate(self, torque_func, **kargs):
         
-    def simulate(self, torque_func):
         
-        class TorqueFunc():
-            def __init__(self, torque_func, viewer) -> None:
-                self.torque_func = torque_func
-                self.viewer = viewer
-                
-            def pre_func(self):
-                torque = self.torque_func()
-                # torque = np.zeros((len(self.viewer.joint_name), 3))
-                torque[0] = np.zeros_like(torque[0])
-                self.viewer.set_torque(torque)
         torque_func = TorqueFunc(torque_func, self.viewer)
         
-        self.viewer.simulationTask(torque_func.pre_func)
+        self.viewer.simulationTask(torque_func.pre_func, **kargs)

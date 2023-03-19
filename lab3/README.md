@@ -95,11 +95,22 @@ pip install panda3d
 
 ## 任务二 走路控制器(Bonus)
 
-Coming Soon
+在本次任务中，你需要实现一个真正的走路控制器。
+
+你需要训练或优化一个策略，让其能够track一个走路的bvh（更复杂的当然也可以）
+
+我们提供了一个physics_warpper，用来操作物理引擎。考虑到很多rl方法都需要大量的仿真采样，而带渲染的仿真采样速度较慢，
+我们的physics_warpper中包含了一个不含渲染的仿真，其输入为一个torque_func(即`WalkingConroller.apply_torqe`的类似物，会在每个substep仿真前被调用)。
+
+一些参考方法：
+
+- 基于采样和优化的方法：[Learning Reduced-Order Feedback Policies for Motion Skills](https://libliu.info/)
+- 基于强化学习的方法：[DeepMimic: Example-Guided Deep Reinforcement Learning of Physics-Based Character Skills](https://xbpeng.github.io/projects/DeepMimic/index.html)
+- 基于模型的强化学习的方法：[SuperTrack – Motion Tracking for Physically Simulated Characters using Supervised Learning](https://montreal.ubisoft.com/en/supertrack-motion-tracking-for-physically-simulated-characters-using-supervised-learning/)
 
 
 ## 提交
 
-需要提交的文件是`answer_task1.py`。
+需要提交的文件是`answer_task1.py`和`answer_task2.py`。
 
 如有问题或Bug，可以在issue，QQ群和我们的[课程讨论版](https://github.com/GAMES-105/GAMES-105/discussions)内进行讨论。

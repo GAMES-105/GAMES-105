@@ -25,14 +25,18 @@ class WalkingController():
     def prepare(self):
         '''
         在仿真开始前调用, 可以用于训练或开环优化
+        作为实例我们简单地初始化一下姿势
         '''
+        translation, orientation = self.motion.batch_forward_kinematics(frame_id_list = [0])
+        self.physics_handler.set_pose(translation[0], orientation[0])
         
         pass
 
     def apply_torque(self):
         '''
-        在仿真每一帧调用
+        在仿真每一帧调用, 返回值为每个关节应该施加的力矩
+        我们这里用的是静态站立力矩
         '''
+        torque = part3_cal_static_standing_torque(self.motion, self.physics_info)
         self.simulated_step += 1
-        pass
-    
+        return torque

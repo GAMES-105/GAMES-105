@@ -351,9 +351,9 @@ class SimpleViewer(ShowBase):
         if self.update_func and self.update_flag:
             self.update_func(self)
         if self.update_flag:
-            self.simulationTask(rendering=True)
+            self.simulationTask(self.pre_simulation_func, rendering=True)
         return task.cont
-        
+    
         
     # @profile
     def simulationTask(self, pre_simulation_func = None, rendering = False):
@@ -488,6 +488,7 @@ class SimpleViewer(ShowBase):
         self.name2idx = name_idx_map
         self.parent_index = info['parent'][:real_len]
         self.init_joint_pos = self.get_joint_positions()
+        self.offset = self.get_body_positions() - self.get_joint_positions()
 
     def set_pose(self, joint_name, joint_translation, joint_orientation):
         
@@ -499,16 +500,28 @@ class SimpleViewer(ShowBase):
     def get_pose(self):
         joint_name = self.joint_name
         joint_orientation = []
-        joint_avel = []
+        joint_pos = []
         for i in range(len(joint_name)):
             joint_orientation.append(self.get_physics_joint_orientation_by_name(joint_name[i]))
-            joint_avel.append(self.get_joint_avel_by_name(joint_name[i]))
-        return np.concatenate(joint_orientation).reshape(-1,4), np.concatenate(joint_avel).reshape(-1,3)
+            joint_pos.append(self.get_physics_joint_position_by_name(joint_name[i]))
+        return np.concatenate(joint_pos).reshape(-1,3), np.concatenate(joint_orientation).reshape(-1,4)
     
     def sync_kinematic_to_physics(self):
         for i in range(len(self.physics_body)):
             self.physics_body[i].setPosition(self.body[i].getPos(self.render))
             self.physics_body[i].setQuaternion(self.body[i].getQuat(self.render))        
+    
+    def set_physics_joints(self, joint_pos, joint_orientation):
+        offset = self.offset
+        rotation = R.from_quat(joint_orientation)
+        body_pos = joint_pos + rotation.apply(offset)
+        self.set_physics_body(body_pos, joint_orientation)
+    
+    def set_physics_body(self, body_pos, body_orientation):
+        body_orientation = body_orientation[...,[3,0,1,2]]
+        for i in range(len(self.physics_body)):
+            self.physics_body[i].setPosition(*(body_pos[i]))
+            self.physics_body[i].setQuaternion(pc.Quat(*body_orientation[i].tolist()))    
     
     def set_body_velocities(self, body_vel):
         for i in range(len(body_vel)):
