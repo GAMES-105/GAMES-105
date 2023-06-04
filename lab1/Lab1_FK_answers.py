@@ -1,23 +1,7 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as R
-
-def load_motion_data(bvh_file_path):
-    """part2 辅助函数，读取bvh文件"""
-    with open(bvh_file_path, 'r') as f:
-        lines = f.readlines()
-        for i in range(len(lines)):
-            if lines[i].startswith('Frame Time'):
-                break
-        motion_data = []
-        for line in lines[i+1:]:
-            data = [float(x) for x in line.split()]
-            if len(data) == 0:
-                break
-            motion_data.append(np.array(data).reshape(1,-1))
-        motion_data = np.concatenate(motion_data, axis=0)
-    return motion_data
-
-
+from bvh import load_hierarchy, load_motion_data, bvh_channels_map
+from quaternion import hamilton_product, conjugate, rotate
 
 def part1_calculate_T_pose(bvh_file_path):
     """请填写以下内容
@@ -30,11 +14,16 @@ def part1_calculate_T_pose(bvh_file_path):
     Tips:
         joint_name顺序应该和bvh一致
     """
-    joint_name = None
-    joint_parent = None
-    joint_offset = None
+    joint_name = []
+    joint_parent = []
+    joint_offset = []
+    character = load_hierarchy(bvh_file_path)
+    for i, _ in enumerate(character["type"]):
+        joint_name.append(character["name"][i])
+        joint_parent.append(character["parent"][i])
+        joint_offset.append(character["offset"][i])
+    joint_offset = np.array(joint_offset)
     return joint_name, joint_parent, joint_offset
-
 
 def part2_forward_kinematics(joint_name, joint_parent, joint_offset, motion_data, frame_id):
     """请填写以下内容
@@ -48,8 +37,30 @@ def part2_forward_kinematics(joint_name, joint_parent, joint_offset, motion_data
         1. joint_orientations的四元数顺序为(x, y, z, w)
         2. from_euler时注意使用大写的XYZ
     """
-    joint_positions = None
-    joint_orientations = None
+    joint_positions = []
+    joint_orientations = []
+    motion = motion_data[frame_id] # .shape = (#channels)
+    slice_idx = 0
+    for i, offset in enumerate(joint_offset):
+        par_idx = joint_parent[i]
+        if i == 0: # joint_name[i] == 'RootJoint'
+            data_slice = motion[slice_idx: slice_idx + 6]
+            slice_idx += 6
+            position = data_slice[:3] + np.array(offset)
+            orientation = R.from_euler('XYZ', data_slice[3:], True).as_quat()
+        elif joint_name[i].endswith('_end'):
+            position = joint_positions[par_idx] + rotate(joint_orientations[par_idx], np.array(offset), seq='xyzw')
+            orientation = np.array([0, 0, 0, 1]) # dummy: set identity
+        else:
+            data_slice = motion[slice_idx: slice_idx + 3]
+            slice_idx += 3
+            rotation = R.from_euler('XYZ', data_slice, True).as_quat()
+            position = joint_positions[par_idx] + rotate(joint_orientations[par_idx], np.array(offset), seq='xyzw')
+            orientation = hamilton_product(joint_orientations[par_idx], rotation, seq='xyzw')
+        joint_positions.append(position)
+        joint_orientations.append(orientation)
+    joint_positions = np.array(joint_positions)
+    joint_orientations = np.array(joint_orientations)
     return joint_positions, joint_orientations
 
 
@@ -63,5 +74,31 @@ def part3_retarget_func(T_pose_bvh_path, A_pose_bvh_path):
         两个bvh的joint name顺序可能不一致哦(
         as_euler时也需要大写的XYZ
     """
-    motion_data = None
+    motion_data = []
+    # load characters
+    ch_T = load_hierarchy(T_pose_bvh_path, debug=True)
+    ch_A = load_hierarchy(A_pose_bvh_path, debug=True)
+    mo = load_motion_data(A_pose_bvh_path)
+    cmap = bvh_channels_map(ch_A)
+    # print(set(ch_T["name"]) == set(ch_A["name"])) # True
+    glbOrientOffset = {
+        "lShoulder": R.from_euler('XYZ', [[0, 0, +45]], True),
+        "rShoulder": R.from_euler('XYZ', [[0, 0, -45]], True),
+    } # retarget: local rotation convert: TPose to APose
+    ### global (orientation) should be the same
+    mo_ret = []
+    for i, name in enumerate(ch_T["name"]):
+        j = ch_A["name"].index(name)
+        s_st, s_ed = cmap[j]
+        if j == 0: # joint_name[i] == 'RootJoint'
+            mo_ret.append(mo[:, s_st: s_ed])
+        elif name.endswith('_end'):
+            assert s_st == s_ed # dummy end site
+        else:
+            if name in glbOrientOffset:
+                goo = glbOrientOffset[name]
+                mo_ret.append((R.from_euler('XYZ', mo[:, s_st: s_ed], True) * goo.inv()).as_euler('XYZ', True))
+            else:
+                mo_ret.append(mo[:, s_st: s_ed])
+    motion_data = np.concatenate(mo_ret, axis=-1)
     return motion_data
