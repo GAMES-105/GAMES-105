@@ -27,6 +27,23 @@ def conjugate(q, seq='xyzw'):
     else:
         return np.array([-q[0], -q[1], -q[2], q[3]])
 
+def to_axis_angle(q, seq='xyzw'):
+    """ quaternion to axis_angle """
+    assert seq in ('wxyz', 'xyzw')
+    if seq == 'wxyz':
+        w, x, y, z = q
+    else:
+        x, y, z, w = q
+    theta = 2.0 * np.arccos(w)
+    sin_half = np.sin(theta * 0.5)
+    if sin_half < 1E-8:
+        return np.array([1, 0, 0]), 0.0
+    rx = x / sin_half
+    ry = y / sin_half
+    rz = z / sin_half
+    e = np.array([rx, ry, rz])
+    return e / np.linalg.norm(e), theta
+
 def rotate(q, v, seq='xyzw'):
     """ rotate a vector by quaternion """
     assert seq in ('wxyz', 'xyzw')
