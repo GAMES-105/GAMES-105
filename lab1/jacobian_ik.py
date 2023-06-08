@@ -121,11 +121,11 @@ def jacobian(gp, gr, t, use_left_perturbation=False):
             J[:, 3 * i: 3 * (i + 1)] = -quat_as_matrix(Q_i) @ skew_matrix(rho_i_j)
     return J
 
-def jacobian_transpose_ik(gp, gr, offset, t, use_left_perturbation=False, n_iter=20):
+def jacobian_transpose(gp, gr, offset, t, use_left_perturbation=False, early_stop_eps=1E-5, n_iter=20):
     """ delta_θ = alpha * J_T * e """
     error = np.linalg.norm(t - gp[-1])
     error_history = [error,]
-    print(f"[Jacobian Transpose IK] before: error = {error}")
+    print(f"[Jacobian Transpose] before: error = {error}")
 
     for i in range(n_iter):
         J = jacobian(gp, gr, t, use_left_perturbation)
@@ -161,7 +161,41 @@ def jacobian_transpose_ik(gp, gr, offset, t, use_left_perturbation=False, n_iter
         error_history.append(error)
         print(f"[Iter:{i:02d}] in progress: alpha = {alpha:.08f}, error = {error:.08f}")
 
+        if error < early_stop_eps:
+            break
+
     return np.array(error_history)
+
+def jacobian_pseudo_inverse(gp, gr, offset, t, use_left_perturbation=False, early_stop_eps=1E-5, n_iter=20):
+    """ delta_θ = J_T * ( J * J_T )^-1 * e """
+    error = np.linalg.norm(t - gp[-1])
+    error_history = [error,]
+    print(f"[Jacobian Pseudo-Inverse] before: error = {error}")
+
+    for i in range(n_iter):
+        J = jacobian(gp, gr, t, use_left_perturbation)
+        e = t - gp[-1]
+        delta = J.T @ np.linalg.inv(J @ J.T) @ e
+
+        lr = [q if j == 0 else quat_normalize(hamilton_product(conjugate(gr[j - 1]), q)) for j, q in enumerate(gr)]
+        for j, q in enumerate(lr):
+            if use_left_perturbation:
+                lr[j] = quat_normalize(hamilton_product(quat_from_rotvec(delta[3 * j: 3 * (j + 1)]), q))
+            else:
+                lr[j] = quat_normalize(hamilton_product(q, quat_from_rotvec(delta[3 * j: 3 * (j + 1)])))
+
+            gr[j] = lr[j] if j == 0 else quat_normalize(hamilton_product(gr[j - 1], lr[j]))
+            gp[j + 1] = gp[j] + rotate(gr[j], offset[j])
+
+        error = np.linalg.norm(t - gp[-1])
+        error_history.append(error)
+        print(f"[Iter:{i:02d}] in progress: error = {error:.08f}")
+
+        if error < early_stop_eps:
+            break
+
+    return np.array(error_history)
+
 
 if __name__ == '__main__':
 
@@ -190,16 +224,20 @@ if __name__ == '__main__':
     print(J1.shape)
     # print(J1)
 
-    # method-1: jacobian transpose
-    err_L = jacobian_transpose_ik(
+    # # # method-1: jacobian transpose
+    # jacobian_method, n_iter_limit = jacobian_transpose, 50
+    # method-2: jacobian pseudo-inverse !! much faster than jacobian_transpose
+    jacobian_method, n_iter_limit = jacobian_pseudo_inverse, 10
+
+    err_L = jacobian_method(
         gp=gPs.copy(), gr=gRs.copy(), offset=bone,
         t=target,
         use_left_perturbation=True,
-        n_iter=50)
-    err_R = jacobian_transpose_ik(
+        n_iter=n_iter_limit)
+    err_R = jacobian_method(
         gp=gPs.copy(), gr=gRs.copy(), offset=bone,
         t=target,
         use_left_perturbation=False,
-        n_iter=50)
+        n_iter=n_iter_limit)
     print("if same?:=", np.abs(err_L - err_R).mean())
 
