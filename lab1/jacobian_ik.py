@@ -125,7 +125,7 @@ def jacobian_transpose(gp, gr, offset, t, use_left_perturbation=False, early_sto
     """ delta_θ = alpha * J_T * e """
     error = np.linalg.norm(t - gp[-1])
     error_history = [error,]
-    print(f"[Jacobian Transpose] before: error = {error}")
+    print(f"[Jacobian Transpose] init_error = {error}")
 
     for i in range(n_iter):
         J = jacobian(gp, gr, t, use_left_perturbation)
@@ -159,7 +159,7 @@ def jacobian_transpose(gp, gr, offset, t, use_left_perturbation=False, early_sto
 
         error = np.linalg.norm(t - gp[-1])
         error_history.append(error)
-        print(f"[Iter:{i:02d}] in progress: alpha = {alpha:.08f}, error = {error:.08f}")
+        print(f"[Iteration:{i:04d}] in progress: alpha = {alpha:.08f}, error = {error:.08f}")
 
         if error < early_stop_eps:
             break
@@ -170,7 +170,7 @@ def jacobian_pseudo_inverse(gp, gr, offset, t, use_left_perturbation=False, earl
     """ delta_θ = J_T * ( J * J_T )^-1 * e """
     error = np.linalg.norm(t - gp[-1])
     error_history = [error,]
-    print(f"[Jacobian Pseudo-Inverse] before: error = {error}")
+    print(f"[Jacobian Pseudo-Inverse] init_error = {error}")
 
     for i in range(n_iter):
         J = jacobian(gp, gr, t, use_left_perturbation)
@@ -189,17 +189,57 @@ def jacobian_pseudo_inverse(gp, gr, offset, t, use_left_perturbation=False, earl
 
         error = np.linalg.norm(t - gp[-1])
         error_history.append(error)
-        print(f"[Iter:{i:02d}] in progress: error = {error:.08f}")
+        print(f"[Iteration:{i:04d}] in progress: error = {error:.08f}")
 
         if error < early_stop_eps:
             break
 
     return np.array(error_history)
 
+def jacobian_damped_least_squares(gp, gr, offset, t, use_left_perturbation=False, early_stop_eps=1E-5, n_iter=20):
+    """ Levenberg-Marquardt method: delta_θ = J_T * ( J * J_T + λ^2 * I )^-1 * e """
+    error = np.linalg.norm(t - gp[-1])
+    error_history = [error,]
+    print(f"[Jacobian DLS (LM)] init_error = {error}")
+
+    lmbd = 2.0 # init lambda
+    for i in range(n_iter):
+        J = jacobian(gp, gr, t, use_left_perturbation)
+        e = t - gp[-1]
+        delta = J.T @ np.linalg.inv(J @ J.T + lmbd * lmbd * np.eye(J.shape[0])) @ e
+
+        lr = [q if j == 0 else quat_normalize(hamilton_product(conjugate(gr[j - 1]), q)) for j, q in enumerate(gr)]
+        F_prev = np.copy(gp[-1])
+        for j, q in enumerate(lr):
+            if use_left_perturbation:
+                lr[j] = quat_normalize(hamilton_product(quat_from_rotvec(delta[3 * j: 3 * (j + 1)]), q))
+            else:
+                lr[j] = quat_normalize(hamilton_product(q, quat_from_rotvec(delta[3 * j: 3 * (j + 1)])))
+
+            gr[j] = lr[j] if j == 0 else quat_normalize(hamilton_product(gr[j - 1], lr[j]))
+            gp[j + 1] = gp[j] + rotate(gr[j], offset[j])
+
+        error = np.linalg.norm(t - gp[-1])
+        error_history.append(error)
+        # Marquardt method: update lambda
+        numer = gp[-1] - F_prev
+        donom = J @ delta
+        ratio = numer.dot(donom) / (donom.dot(donom) + 1E-12)
+        print(f"[Iteration:{i:04d}] in progress: lambda = {lmbd:.06f}, ratio = {ratio:.06f}, error = {error:.08f}")
+        if ratio < 0.25:
+            lmbd = lmbd * 2.0
+        elif ratio > 0.75:
+            lmbd = lmbd / 3.0
+        lmbd = np.clip(lmbd, 1E-8, 2<<15)
+
+        if error < early_stop_eps:
+            break
+
+    return np.array(error_history)
 
 if __name__ == '__main__':
 
-    # np.random.seed(0xac1997)
+    np.random.seed(0xac1997)
 
     # test data: generate 100 bones with random rotations and bone lengths
     n = 100
@@ -224,10 +264,12 @@ if __name__ == '__main__':
     print(J1.shape)
     # print(J1)
 
-    # # # method-1: jacobian transpose
+    ### method-1: jacobian transpose
     # jacobian_method, n_iter_limit = jacobian_transpose, 50
-    # method-2: jacobian pseudo-inverse !! much faster than jacobian_transpose
-    jacobian_method, n_iter_limit = jacobian_pseudo_inverse, 10
+    ### method-2: jacobian pseudo-inverse !! much faster than jacobian_transpose
+    # jacobian_method, n_iter_limit = jacobian_pseudo_inverse, 10
+    ### method-3: DLS (LM)
+    jacobian_method, n_iter_limit = jacobian_damped_least_squares, 10
 
     err_L = jacobian_method(
         gp=gPs.copy(), gr=gRs.copy(), offset=bone,
