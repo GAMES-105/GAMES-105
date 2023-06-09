@@ -79,5 +79,22 @@ def bonus_inverse_kinematics(meta_data, joint_positions, joint_orientations, lef
     """
     输入左手和右手的目标位置，固定左脚，完成函数，计算逆运动学
     """
-    
+    # print(meta_data.get_path_from_root_to_end())
+    meta_chain1 = type(meta_data)(meta_data.joint_name, meta_data.joint_parent, meta_data.joint_initial_position, 'lToeJoint_end', 'lWrist_end')
+    meta_chain2 = type(meta_data)(meta_data.joint_name, meta_data.joint_parent, meta_data.joint_initial_position, 'lToeJoint_end', 'rWrist_end')
+
+    joint_positions = joint_positions.copy()
+    joint_orientations = joint_orientations.copy()
+    # brutal force iteration
+    for i in range(30):
+        joint_positions, joint_orientations = \
+            part1_inverse_kinematics(meta_chain1, joint_positions, joint_orientations, left_target_pose)
+        joint_positions, joint_orientations = \
+            part1_inverse_kinematics(meta_chain2, joint_positions, joint_orientations, right_target_pose)
+        err_chain1 = np.linalg.norm(joint_positions[meta_chain1.joint_name.index("lWrist_end")] - left_target_pose)
+        err_chain2 = np.linalg.norm(joint_positions[meta_chain2.joint_name.index("rWrist_end")] - right_target_pose)
+        print(f"[Iteration:{i:02d}] err_1 = {err_chain1}, err_2 = {err_chain2}")
+        if err_chain1 < 1E-4 and err_chain2 < 1E-4: # early-stop
+            break
+
     return joint_positions, joint_orientations

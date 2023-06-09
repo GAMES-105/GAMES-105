@@ -46,7 +46,7 @@ def part2_forward_kinematics(joint_name, joint_parent, joint_offset, motion_data
         if i == 0: # joint_name[i] == 'RootJoint'
             data_slice = motion[slice_idx: slice_idx + 6]
             slice_idx += 6
-            position = data_slice[:3] + np.array(offset)
+            position = data_slice[:3] # + np.array(offset)
             orientation = R.from_euler('XYZ', data_slice[3:], True).as_quat()
         elif joint_name[i].endswith('_end'):
             position = joint_positions[par_idx] + rotate(joint_orientations[par_idx], np.array(offset), seq='xyzw')
