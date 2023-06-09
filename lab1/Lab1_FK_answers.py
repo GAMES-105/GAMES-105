@@ -76,8 +76,8 @@ def part3_retarget_func(T_pose_bvh_path, A_pose_bvh_path):
     """
     motion_data = []
     # load characters
-    ch_T = load_hierarchy(T_pose_bvh_path, debug=True)
-    ch_A = load_hierarchy(A_pose_bvh_path, debug=True)
+    ch_T = load_hierarchy(T_pose_bvh_path, debug=False)
+    ch_A = load_hierarchy(A_pose_bvh_path, debug=False)
     mo = load_motion_data(A_pose_bvh_path)
     cmap = bvh_channels_map(ch_A)
     # print(set(ch_T["name"]) == set(ch_A["name"])) # True
