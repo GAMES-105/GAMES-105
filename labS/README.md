@@ -18,8 +18,7 @@ pip install panda3d
 并且需要到以下连接中下载`test.bam`放到`material`文件夹中。
 
 ```
-https://disk.pku.edu.cn:443/link/9E6A696BAA3A4066C54D7A1A6B0F6E15
-有效期限：2024-03-31 23:59
+https://disk.pku.edu.cn/link/AAF8EDBD6542AE4C02BD8A0909FE03FC5D
 ```
 
 完成后可以运行`task0_build_and_run.py`，你将会看到一个带有蒙皮的T_pose人物
