@@ -81,7 +81,7 @@ def build_loop_motion(bvh_motion, half_life = 0.2, fps = 60):
             0.5*rot_diff, 0.5*avel_diff, half_life, i/fps
         )
         offset2 = decay_spring_implicit_damping_rot(
-            -0.5*rot_diff, -0.5*avel_diff, half_life, (bvh_motion.motion_length-i-1)/fps
+            -0.5*rot_diff, 0.5*avel_diff, half_life, (bvh_motion.motion_length-i-1)/fps
         )
         offset_rot = R.from_rotvec(offset1[0] + offset2[0])
         bvh_motion.joint_rotation[i] = (offset_rot * R.from_quat(rotations[i])).as_quat() 
@@ -99,7 +99,7 @@ def build_loop_motion(bvh_motion, half_life = 0.2, fps = 60):
             0.5*pos_diff, 0.5*vel_diff, half_life, i/fps
         )
         offset2 = decay_spring_implicit_damping_pos(
-            -0.5*pos_diff, -0.5*vel_diff, half_life, (bvh_motion.motion_length-i-1)/fps
+            -0.5*pos_diff, 0.5*vel_diff, half_life, (bvh_motion.motion_length-i-1)/fps
         )
         offset_pos = offset1[0] + offset2[0]
         bvh_motion.joint_position[i] += offset_pos
